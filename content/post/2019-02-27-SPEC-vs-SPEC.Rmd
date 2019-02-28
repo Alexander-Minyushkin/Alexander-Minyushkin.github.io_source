@@ -1,0 +1,74 @@
+---
+title: "SPEC vs SPEC"
+author: "Alexander Minyushkin"
+date: 2019-02-27T21:13:14-05:00
+categories: ["benchmark"]
+tags: ["R", "regression"]
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE)
+oldw <- getOption("warn")
+options(warn = -1)
+
+usePackage <- function(p) {
+  if (!is.element(p, installed.packages()[,1]))
+    install.packages(p, dep = TRUE)
+  require(p, character.only = TRUE, quietly = TRUE)
+}
+
+usePackage("data.table") # for fast merging of access log & sar
+usePackage("parallel")
+usePackage("plyr")
+usePackage("ggplot2")
+
+usePackage('DT')
+usePackage("plotly")
+
+
+Sys.setlocale("LC_TIME", "us")
+
+options(stringsAsFactors = FALSE)
+
+
+```
+
+
+SPEC CPU 2006 benchmark is retired in January 2018 and replaced by the SPEC CPU 2017 suite https://www.spec.org/retired.html#cpu
+
+What are you going to do while your faivorite CPUs are not tested in SPEC CPU 2017?
+
+Download All records as CSV and find conversion coefficient.
+https://www.spec.org/cgi-bin/osgresults?conf=rint2006
+https://www.spec.org/cgi-bin/osgresults?conf=rint2017
+
+
+rint_Result_2017 = 0.1062927 x rint_Result_2006
+
+```{r pressure, echo=FALSE}
+spec2006 <- fread("2019-02-27-SPEC-vs-SPEC_data/rint2006-results-20190227-045636.csv")
+
+spec2017 <- fread("2019-02-27-SPEC-vs-SPEC_data/rint2017-results-20190227-045535.csv")
+
+spec_vs_spec <- 
+  join(spec2006[`Result`>0,.(test_id = paste(`Processor`, `# Cores`, `System`, sep = ", "), Result_2006=`Result`)],
+       spec2017[`Result`>0,.(test_id = paste(`Processor`, `# Cores`, `System`, sep = ", "), Result_2017=`Result`)],
+       by="test_id", type="inner")
+
+model <- lm(Result_2017 ~ Result_2006 + 0,spec_vs_spec)
+
+
+
+ggplotly(
+  ggplot(data = spec_vs_spec, 
+         aes(x=Result_2006, 
+             y=Result_2017,
+             group=test_id)) + geom_abline(color = "red",slope=model$coefficients[1], intercept = 0) + 
+    geom_point()  + ggtitle(paste0("SPEC rint2017 vs rint2006")) 
+)
+
+summary(model)
+
+options(warn = oldw)
+```
+
