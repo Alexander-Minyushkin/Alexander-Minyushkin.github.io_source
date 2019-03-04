@@ -1,4 +1,4 @@
-baseurl = "/"
+baseurl = "https://alexander-minyushkin.github.io/"
 languageCode = "en-us"
 title = "Blog about benchmarks, ML, clouds and camelopard."
 theme = "hugo-lithium"
@@ -10,14 +10,15 @@ ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
     post = "/:year/:month/:day/:slug/"
 
 [[menu.main]]
-    name = "About"
-    url = "/about/"
-[[menu.main]]
     name = "GitHub"
     url = "https://github.com/Alexander-Minyushkin"
 [[menu.main]]
     name = "Twitter"
     url = "https://twitter.com/AMiniushkin"
+[[menu.main]]
+    name = "Youtube"
+    url = "https://www.youtube.com/channel/UC_G9bFmPngSeLnHjimtzXSg"
+    
 
 [params]
     description = "A website built through Hugo and blogdown."

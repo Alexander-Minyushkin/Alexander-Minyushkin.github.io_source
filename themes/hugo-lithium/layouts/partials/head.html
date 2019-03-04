@@ -2,12 +2,25 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 {{ .Hugo.Generator }}
 
+<meta name="twitter:card" content="player" />
+<meta name="twitter:site" content="@AMiniushkin" />	
+<meta name="twitter:description" content="{{ .Title }}{{ with .Params.subtitle }} - {{ . }} {{ end }}" />	
+
+{{ if eq .URL "/" }}
+{{ else }}
+<meta name="twitter:player" content="https://alexander-minyushkin.github.io/widget/{{.File.TranslationBaseName}}_widget.html" />
+<meta name="twitter:player:width" content="480" />
+<meta name="twitter:player:height" content="480" />
+{{ end }}
+
 {{ if eq .URL "/" }}
 <title>{{ .Site.Title }}</title>
 <meta property="og:title" content="{{ .Site.Title }}">
 <meta property="og:type" content="website">
+<meta name="twitter:title" content="{{ .Site.Title }}" />
 {{ else }}
-<title>{{ .Title }}{{ with .Params.subtitle }} - {{ . }} {{ end }} - {{ .Site.Title }}</title>
+<title>{{ .Title }}{{ with .Params.subtitle }} - {{ . }} {{ end }}</title>
+<meta name="twitter:title" content="{{ .Title }} - {{ .Site.Title }}" />
 <meta property="og:title" content="{{ .Title }} - {{ .Site.Title }}">
 {{ end }}
 {{ with .Site.Params.favicon }}
@@ -16,9 +29,11 @@
 
 {{ if eq .URL "/" }}
 <meta property="description" content="{{ .Site.Params.description }}">
+<meta name="twitter:description" content="{{ .Site.Params.description }}" />
 {{ else }}
   {{ if .Description }}
   <meta property="description" content="{{ .Description }}">
+  <meta name="twitter:description" content="{{ .Description }}" />
   {{ end }}
 {{ end }}
 

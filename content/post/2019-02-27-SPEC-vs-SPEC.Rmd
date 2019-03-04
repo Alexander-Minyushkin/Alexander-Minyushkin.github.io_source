@@ -1,9 +1,14 @@
 ---
 title: "SPEC vs SPEC"
+subtitle: "Benchmark hacking"
 author: "Alexander Minyushkin"
 date: 2019-02-27T21:13:14-05:00
 categories: ["benchmark"]
 tags: ["R", "regression"]
+output:
+  html_document:
+    includes:
+       in_header: "2019-02-27-SPEC-vs-SPEC_header.html"
 ---
 
 ```{r setup, include=FALSE}
@@ -58,7 +63,7 @@ spec_vs_spec <-
 model <- lm(Result_2017 ~ Result_2006 + 0,spec_vs_spec)
 
 
-
+interactive_plot <-
 ggplotly(
   ggplot(data = spec_vs_spec, 
          aes(x=Result_2006, 
@@ -67,8 +72,23 @@ ggplotly(
     geom_point()  + ggtitle(paste0("SPEC rint2017 vs rint2006")) 
 )
 
+interactive_plot
+
+interactive_plot$sizingPolicy$padding <- "0"
+htmlwidgets::saveWidget(
+  interactive_plot, "../../public/widget/2019-02-27-SPEC-vs-SPEC_widget.html", libdir = "lib",
+  title = "SPEC rint2017 vs rint2006",
+  selfcontained = FALSE
+)
+
 summary(model)
 
 options(warn = oldw)
+
+	
+#<!meta name="twitter:image" content="https://yoursite.com/example.png" />
+#{{"/widget/"}}{{.File.TranslationBaseName}}{{"_widget.html"}}
 ```
 
+You can leave comments under video about this blog post https://youtu.be/hXMpDZ8sfd0 or on Twitter.
+<meta name="twitter:player" content="/widget/2019-02-27-SPEC-vs-SPEC_widget.html" />
