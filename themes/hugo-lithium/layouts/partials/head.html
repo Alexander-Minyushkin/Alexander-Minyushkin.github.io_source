@@ -2,12 +2,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 {{ .Hugo.Generator }}
 
-<meta name="twitter:card" content="player" />
+
 <meta name="twitter:site" content="@AMiniushkin" />	
 <meta name="twitter:description" content="{{ .Title }}{{ with .Params.subtitle }} - {{ . }} {{ end }}" />	
 
 {{ if eq .URL "/" }}
 {{ else }}
+<meta name="twitter:card" content="player" />
+<meta name="twitter:image" content="https://alexander-minyushkin.github.io/widget/{{.File.TranslationBaseName}}_widget.png" />
 <meta name="twitter:player" content="https://alexander-minyushkin.github.io/widget/{{.File.TranslationBaseName}}_widget.html" />
 <meta name="twitter:player:width" content="480" />
 <meta name="twitter:player:height" content="480" />

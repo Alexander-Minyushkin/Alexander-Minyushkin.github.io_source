@@ -1,0 +1,138 @@
+---
+title: "Serverless providers"
+subtitle: "Concurrency to be seen"
+author: "Alexander Minyushkin"
+date: 2019-03-05T19:00:00+03:00
+categories: ["benchmark"]
+tags: ["R", "cloud", ]
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE)
+oldw <- getOption("warn")
+options(warn = -1)
+
+usePackage <- function(p) {
+  if (!is.element(p, installed.packages()[,1]))
+    install.packages(p, dep = TRUE)
+  require(p, character.only = TRUE, quietly = TRUE)
+}
+
+usePackage("data.table") # for fast merging of access log & sar
+usePackage("parallel")
+usePackage("plyr")
+usePackage("ggplot2")
+
+usePackage('DT')
+usePackage("plotly")
+usePackage("jsonlite")
+usePackage("htmltools")
+
+Sys.setlocale("LC_TIME", "us")
+
+options(stringsAsFactors = FALSE)
+
+
+```
+
+Here is very nice article [The largest benchmark of Serverless providers.](https://medium.com/elbstack/the-largest-benchmark-of-serverless-providers-ac19b55750f4)
+
+And I really wait for new results which was promised to all of us in Bernd's Twitter.
+
+```{r tweet, echo=FALSE}
+htmltools::includeHTML("2019-03-05-Serverless-providers_data/tweet.txt")
+```
+
+
+
+
+However I found something interesting in previously piblished results.
+
+If we draw actual concurrency during tests we will see that it was not always smooth.
+
+```{r blog, echo=FALSE}
+
+
+
+D <- data.table(fromJSON('2019-03-05-Serverless-providers_data/dump.json'))
+
+D <- D[!is.na(fibonacciTime)]
+
+get_concurrency <- function(D, provider_, concurrency_) {
+  d<-D[provider == provider_ & concurrency == concurrency_,list(start, end),]
+
+  concurrency <- rbindlist(list(data.table(time = d$start, change= 1), 
+                                data.table(time = d$end, change= -1)))[order(time)]
+  
+  concurrency$time <- concurrency$time - min(concurrency$time)
+  
+  concurrency <- concurrency[,.(change=sum(change)), "time"]
+  concurrency$N <- cumsum(concurrency$change)
+
+  data.table(time = concurrency$time[sort(rep(1:dim(concurrency)[1],2))],
+             N = c(0, concurrency$N[sort(rep(1:dim(concurrency)[1],2))[1:(2*dim(concurrency)[1] -1)]]),
+             provider = provider_,
+             concurrency = concurrency_,
+             num_of_tasks = dim(d)[1])
+}
+
+all_provider_given_concurrency <- function(D, conc) {
+  rbindlist( lapply(unique(D$provider), function(x){get_concurrency(D, x, conc)}))
+}
+
+all_concurrency_given_provider <- function(D, prov) {
+  rbindlist( lapply(unique(D[provider == prov]$concurrency), function(x){get_concurrency(D, prov, x)}))
+}
+
+all_providers_all_concurrency <- function(D) {
+  rbindlist( lapply(unique(D$concurrency), 
+                    function(x)
+                      {all_provider_given_concurrency(D,x)
+                      }))
+}
+
+
+  ggplot(data = all_providers_all_concurrency(D[concurrency<60 & concurrency>1]), 
+           aes(x=time,
+               y=N,
+               color=provider,
+               group=interaction(provider, concurrency))) +
+      geom_line() + ggtitle("Actual Concurrency during execution")
+  
+options(warn = oldw)
+
+	
+```
+
+It looks like GCF had troubles during concurrency=30 test. 
+
+```{r, echo=FALSE}
+interactive_plot <-
+ggplotly(
+  ggplot(data = all_concurrency_given_provider(D[concurrency>1], 'gcf'), 
+           aes(x=time,
+               y=N,
+               color=as.factor(concurrency),
+               group=concurrency)) +
+      geom_line() + ggtitle("Actual Concurrency during execution. GCF")  
+)
+
+interactive_plot
+
+interactive_plot$sizingPolicy$padding <- "0"
+htmlwidgets::saveWidget(
+  interactive_plot, "../../public/widget/2019-03-05-Serverless-providers_widget.html", libdir = "lib",
+  title = "SPEC rint2017 vs rint2006",
+  selfcontained = FALSE
+)
+
+ggsave("../../public/widget/2019-03-05-Serverless-providers_widget.png", dpi="screen")
+```
+
+Most likely it is temporary issue, after all they managed to successfully provide concurrency 40 and 50.
+
+How frequently this could happen?
+
+You can leave comments here https://twitter.com/AMiniushkin
+

@@ -81,6 +81,8 @@ htmlwidgets::saveWidget(
   selfcontained = FALSE
 )
 
+ggsave("../../public/widget/2019-02-27-SPEC-vs-SPEC_widget.png", dpi="screen")
+
 summary(model)
 
 options(warn = oldw)
