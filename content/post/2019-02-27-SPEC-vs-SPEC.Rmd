@@ -43,7 +43,7 @@ SPEC CPU 2006 benchmark is retired in January 2018 and replaced by the SPEC CPU 
 
 What are you going to do while your faivorite CPUs are not tested in SPEC CPU 2017?
 
-Download All records as CSV and find conversion coefficient.
+Since [Estimates are allowed](https://www.spec.org/cpu2017/Docs/runrules.html#rule_5.6) you can download all records as CSV and find conversion coefficient.
 https://www.spec.org/cgi-bin/osgresults?conf=rint2006
 https://www.spec.org/cgi-bin/osgresults?conf=rint2017
 
@@ -69,7 +69,7 @@ ggplotly(
          aes(x=Result_2006, 
              y=Result_2017,
              group=test_id)) + geom_abline(color = "red",slope=model$coefficients[1], intercept = 0) + 
-    geom_point()  + ggtitle(paste0("SPEC rint2017 vs rint2006")) 
+    geom_point()  + ggtitle(paste0("SPEC rint2017 estimation by rint2006")) 
 )
 
 interactive_plot
