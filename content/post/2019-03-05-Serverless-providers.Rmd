@@ -100,14 +100,12 @@ all_providers_all_concurrency <- function(D) {
                group=interaction(provider, concurrency))) +
       geom_line() + ggtitle("Actual Concurrency during execution")
   
-options(warn = oldw)
-
-	
 ```
 
 It looks like GCF had troubles during concurrency=30 test. 
 
 ```{r, echo=FALSE}
+
 interactive_plot <-
 ggplotly(
   ggplot(data = all_concurrency_given_provider(D[concurrency>1], 'gcf'), 
@@ -127,7 +125,8 @@ htmlwidgets::saveWidget(
   selfcontained = FALSE
 )
 
-ggsave("../../public/widget/2019-03-05-Serverless-providers_widget.png", dpi="screen")
+suppressMessages(ggsave("../../public/widget/2019-03-05-Serverless-providers_widget.png", dpi="screen"))
+
 ```
 
 Most likely it is temporary issue, after all they managed to successfully provide concurrency 40 and 50.

@@ -4,11 +4,12 @@
 
 
 <meta name="twitter:site" content="@AMiniushkin" />	
-<meta name="twitter:description" content="{{ .Title }}{{ with .Params.subtitle }} - {{ . }} {{ end }}" />	
+<meta name="twitter:description" content="{{ .Site.Title }}" />	
+<meta property="description" content="{{ .Site.Title }}">
 
 {{ if eq .URL "/" }}
 {{ else }}
-<meta name="twitter:card" content="player" />
+<meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:image" content="https://alexander-minyushkin.github.io/widget/{{.File.TranslationBaseName}}_widget.png" />
 <meta name="twitter:player" content="https://alexander-minyushkin.github.io/widget/{{.File.TranslationBaseName}}_widget.html" />
 <meta name="twitter:player:width" content="480" />
@@ -22,22 +23,13 @@
 <meta name="twitter:title" content="{{ .Site.Title }}" />
 {{ else }}
 <title>{{ .Title }}{{ with .Params.subtitle }} - {{ . }} {{ end }}</title>
-<meta name="twitter:title" content="{{ .Title }} - {{ .Site.Title }}" />
-<meta property="og:title" content="{{ .Title }} - {{ .Site.Title }}">
+<meta name="twitter:title" content="{{ .Title }}{{ with .Params.subtitle }} - {{ . }} {{ end }}" />
+<meta property="og:title" content="{{ .Title }}{{ with .Params.subtitle }} - {{ . }} {{ end }}">
 {{ end }}
 {{ with .Site.Params.favicon }}
   <link href='{{ . | absURL }}' rel='icon' type='image/x-icon'/>
 {{ end }}
 
-{{ if eq .URL "/" }}
-<meta property="description" content="{{ .Site.Params.description }}">
-<meta name="twitter:description" content="{{ .Site.Params.description }}" />
-{{ else }}
-  {{ if .Description }}
-  <meta property="description" content="{{ .Description }}">
-  <meta name="twitter:description" content="{{ .Description }}" />
-  {{ end }}
-{{ end }}
 
 {{ if .Keywords }}
 <meta property="keywords" content ="{{ delimit .Keywords ", " }}">
