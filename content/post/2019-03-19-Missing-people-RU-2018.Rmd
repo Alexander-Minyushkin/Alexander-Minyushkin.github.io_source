@@ -1,0 +1,76 @@
+---
+title: "Missing people in Russia"
+subtitle: "Year 2018 update"
+author: "Alexander Minyushkin"
+date: 2019-03-19T19:00:00+03:00
+categories: ["open data"]
+tags: ["R", "Kaggle", ]
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE)
+oldw <- getOption("warn")
+options(warn = -1)
+
+usePackage <- function(p) {
+  if (!is.element(p, installed.packages()[,1]))
+    install.packages(p, dep = TRUE)
+  require(p, character.only = TRUE, quietly = TRUE)
+}
+
+usePackage("data.table") # for fast merging of access log & sar
+usePackage("parallel")
+usePackage("plyr")
+usePackage("ggplot2")
+
+usePackage('DT')
+usePackage("plotly")
+usePackage("jsonlite")
+usePackage("htmltools")
+
+Sys.setlocale("LC_TIME", "us")
+
+options(stringsAsFactors = FALSE)
+
+
+```
+
+
+
+Official open data from [The Ministry of Internal Affairs of the Russian Federation](https://en.mvd.ru/) on missing and wanted people, identified and unindentified corpses updated for year 2018.
+
+Detailed data available on [Kaggle Dataset](https://www.kaggle.com/miniushkin/how-to-read-data-on-missing-people-in-russia)
+
+
+
+```{r blog, echo=FALSE}
+
+D <- fread("2019-03-19-Missing-people-RU-2018/data.txt")
+
+D
+
+interactive_plot <-
+ggplotly(
+  ggplot(data = D, 
+           aes(x=year,
+               y=lost-found)) + ylim(0,NA) +
+      geom_line() + geom_point() + 
+    ggtitle("People missed and not found during a year")  
+)
+  
+interactive_plot
+
+interactive_plot$sizingPolicy$padding <- "0"
+htmlwidgets::saveWidget(
+  interactive_plot, "../../public/widget/2019-03-19-Missing-people-RU-2018_widget.html", libdir = "lib",
+  title = "SPEC rint2017 vs rint2006",
+  selfcontained = FALSE
+)
+
+suppressMessages(ggsave("../../public/widget/2019-03-19-Missing-people-RU-2018_widget.png", dpi="screen"))
+```
+
+
+You can leave comments here https://twitter.com/AMiniushkin 
+
