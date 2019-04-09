@@ -1,0 +1,154 @@
+---
+title: "Speeding up R blogdown with Nginx"
+subtitle: "1000x times"
+author: "Alexander Minyushkin"
+date: 2019-04-09T19:00:00+03:00
+categories: ["benchmark"]
+tags: ["R", "Nginx", ]
+
+---
+
+
+
+<p>One of my blogdown sites shows high response times on local PC (Windows 10) while serving from RStudio. To solve this problem I made Nginx config that allows you to view static content while editing blogdown project. Main change to simplest config is to disable all caching in Nginx and browser, otherwise you will not see latest changes after rendering.</p>
+<p>Apache benchmark show response time drop from 2 seconds to 2 milliseconds.</p>
+<p><a href="http://nginx.org/en/docs/beginners_guide.html">Install Nginx</a> and put two files into project folder:</p>
+<ul>
+<li><a href="https://github.com/Alexander-Minyushkin/Alexander-Minyushkin.github.io_source/blob/master/mime.types">mime.types</a> also available in nginx/conf folder</li>
+<li><a href="https://github.com/Alexander-Minyushkin/Alexander-Minyushkin.github.io_source/blob/master/nginx.config">nginx.config</a></li>
+</ul>
+<pre class="bash"><code># nginx.config
+# Windows
+#
+# Start:
+# mkdir ./tmp/logs
+# mkdir ./tmp/temp
+# nginx -p ./tmp -c ./nginx.config
+#
+# List nginx processes
+# tasklist /fi &quot;imagename eq nginx.exe&quot;
+#
+# Kill all nginx
+# taskkill /f /IM nginx.exe
+
+events {
+    worker_connections  1024;
+}
+
+http {
+    include       mime.types;
+
+    server {
+        listen       8070;
+        server_name  localhost;
+
+        location / {            
+            root   ./public;
+            index  index.html;
+            
+            # kill browser cache
+            add_header Last-Modified $date_gmt;
+            add_header Cache-Control &#39;no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0&#39;;
+            if_modified_since off;
+            expires off;
+            etag off;
+            
+            # kill nginx cache
+            # don&#39;t cache it
+            proxy_no_cache 1;
+            # even if cached, don&#39;t try to use it
+            proxy_cache_bypass 1; 
+        }
+    }
+}</code></pre>
+<pre class="bash"><code>&gt; ab -n 20 -c 1 http://127.0.0.1:4321/
+This is ApacheBench, Version 2.3 &lt;$Revision: 1843412 $&gt;
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking 127.0.0.1 (be patient).....done
+
+
+Server Software:
+Server Hostname:        127.0.0.1
+Server Port:            4321
+
+Document Path:          /
+Document Length:        3694 bytes
+
+Concurrency Level:      1
+Time taken for tests:   21.597 seconds
+Complete requests:      20
+Failed requests:        0
+Total transferred:      76320 bytes
+HTML transferred:       73880 bytes
+Requests per second:    0.93 [#/sec] (mean)
+Time per request:       1079.836 [ms] (mean)
+Time per request:       1079.836 [ms] (mean, across all concurrent requests)
+Transfer rate:          3.45 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    1   0.4      1       1
+Processing:   203 1079 851.4   1771    2088
+Waiting:      203 1078 851.4   1771    2087
+Total:        204 1080 851.4   1772    2089
+
+Percentage of the requests served within a certain time (ms)
+  50%   1772
+  66%   1850
+  75%   1928
+  80%   1931
+  90%   1991
+  95%   2089
+  98%   2089
+  99%   2089
+ 100%   2089 (longest request)
+ 
+ 
+&gt; ab -n 20 -c 1 http://127.0.0.1:8070/
+This is ApacheBench, Version 2.3 &lt;$Revision: 1843412 $&gt;
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking 127.0.0.1 (be patient).....done
+
+
+Server Software:        nginx/1.15.10
+Server Hostname:        127.0.0.1
+Server Port:            8070
+
+Document Path:          /
+Document Length:        2857 bytes
+
+Concurrency Level:      1
+Time taken for tests:   0.050 seconds
+Complete requests:      20
+Failed requests:        0
+Total transferred:      63540 bytes
+HTML transferred:       57140 bytes
+Requests per second:    399.98 [#/sec] (mean)
+Time per request:       2.500 [ms] (mean)
+Time per request:       2.500 [ms] (mean, across all concurrent requests)
+Transfer rate:          1240.94 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.5      0       1
+Processing:     1    2   0.5      2       2
+Waiting:        1    1   0.5      1       2
+Total:          1    2   0.5      2       3
+
+Percentage of the requests served within a certain time (ms)
+  50%      2
+  66%      2
+  75%      2
+  80%      3
+  90%      3
+  95%      3
+  98%      3
+  99%      3
+ 100%      3 (longest request)
+ 
+</code></pre>
+<p>You can leave comments here <a href="https://twitter.com/AMiniushkin" class="uri">https://twitter.com/AMiniushkin</a></p>
