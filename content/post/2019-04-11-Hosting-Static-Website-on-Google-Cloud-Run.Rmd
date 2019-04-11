@@ -1,0 +1,105 @@
+---
+title: "Hosting Static Website on Google Cloud Run"
+subtitle: "Why not?"
+author: "Alexander Minyushkin"
+date: 2019-04-11T19:00:00+03:00
+categories: ["GCP"]
+tags: ["Cloud", "GCP", "Flask", "Docker", "Deployment", "Python"]
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE)
+oldw <- getOption("warn")
+options(warn = -1)
+
+usePackage <- function(p) {
+  if (!is.element(p, installed.packages()[,1]))
+    install.packages(p, dep = TRUE)
+  require(p, character.only = TRUE, quietly = TRUE)
+}
+
+usePackage("data.table") # for fast merging of access log & sar
+usePackage("parallel")
+usePackage("plyr")
+usePackage("ggplot2")
+
+usePackage('DT')
+usePackage("plotly")
+usePackage("jsonlite")
+usePackage("htmltools")
+
+Sys.setlocale("LC_TIME", "us")
+
+options(stringsAsFactors = FALSE)
+
+
+```
+
+Deployment of static websites was always fun, easy and free. But new options arrives every day.
+
+Google announced [Cloud Run](https://cloud.google.com/run/) - fully managed stateless HTTP containers which we can use instead of cheaper approach on Cloud Storage https://cloud.google.com/storage/docs/hosting-static-website .
+
+Put these 2 files near **public/** folder with your content.
+
+[app.py](https://github.com/Alexander-Minyushkin/Alexander-Minyushkin.github.io_source/blob/master/app.py) 
+```{bash eval=FALSE}
+# Testing locally: 
+# $ python app.py
+import os
+
+from flask import Flask, request, send_from_directory
+
+app = Flask(__name__)
+
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def send_static(path):
+    if len(path)==0 or path[-1]=='/':
+        return send_from_directory('public', f'{path}index.html')
+    return send_from_directory('public', path)
+
+if __name__ == "__main__":
+    app.run(debug=True,host='0.0.0.0',port=int(os.environ.get('PORT', 8080)))
+```
+
+[Dockerfile](https://github.com/Alexander-Minyushkin/Alexander-Minyushkin.github.io_source/blob/master/Dockerfile)
+```{bash eval=FALSE}
+# Use the official Python image.
+# https://hub.docker.com/_/python
+FROM python:3.6-alpine
+
+# Install production dependencies.
+RUN pip install Flask gunicorn
+
+# Copy local code to the container image.
+ENV APP_HOME /app
+WORKDIR $APP_HOME
+COPY app.py .
+COPY ./public ./public
+
+
+# Run the web service on container startup. Here we use the gunicorn
+# webserver, with one worker process and 8 threads.
+# For environments with multiple CPU cores, increase the number of workers
+# to be equal to the cores available.
+CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 app:app
+```
+
+Then deploy on Cloud Run:
+```{bash eval=FALSE}
+docker build -t gcr.io/[PROJECT-ID]/[SERVICE_NAME]:[TAG] .
+docker push gcr.io/[PROJECT-ID]/[SERVICE_NAME]:[TAG]
+gcloud beta run deploy [SERVICE_NAME] --image gcr.io/[PROJECT-ID]/[SERVICE_NAME]:[TAG] \
+--concurrency=10 \
+--region=us-central1 \
+--allow-unauthenticated
+```
+
+Your site will be available to anybody (thanks to **--allow-unauthenticated**) by link like this https://mystatic-uydlcxd3aq-uc.a.run.app
+
+Remind you once again: this approach is not free. You will need to pay for compute time and for storage (containers introduce additional overhead to size of your content).
+See more details on pricing here https://cloud.google.com/run/pricing
+
+You can leave comments here https://twitter.com/AMiniushkin 
+

@@ -1,0 +1,63 @@
+---
+title: "Hosting Static Website on Google Cloud Run"
+subtitle: "Why not?"
+author: "Alexander Minyushkin"
+date: 2019-04-11T19:00:00+03:00
+categories: ["GCP"]
+tags: ["Cloud", "GCP", "Flask", "Docker", "Deployment", "Python"]
+
+---
+
+
+
+<p>Deployment of static websites was always fun, easy and free. But new options arrives every day.</p>
+<p>Google announced <a href="https://cloud.google.com/run/">Cloud Run</a> - fully managed stateless HTTP containers which we can use instead of cheaper approach on Cloud Storage <a href="https://cloud.google.com/storage/docs/hosting-static-website" class="uri">https://cloud.google.com/storage/docs/hosting-static-website</a> .</p>
+<p>Put these 2 files near <strong>public/</strong> folder with your content.</p>
+<p><a href="https://github.com/Alexander-Minyushkin/Alexander-Minyushkin.github.io_source/blob/master/app.py">app.py</a></p>
+<pre class="bash"><code># Testing locally: 
+# $ python app.py
+import os
+
+from flask import Flask, request, send_from_directory
+
+app = Flask(__name__)
+
+@app.route(&#39;/&#39;, defaults={&#39;path&#39;: &#39;&#39;})
+@app.route(&#39;/&lt;path:path&gt;&#39;)
+def send_static(path):
+    if len(path)==0 or path[-1]==&#39;/&#39;:
+        return send_from_directory(&#39;public&#39;, f&#39;{path}index.html&#39;)
+    return send_from_directory(&#39;public&#39;, path)
+
+if __name__ == &quot;__main__&quot;:
+    app.run(debug=True,host=&#39;0.0.0.0&#39;,port=int(os.environ.get(&#39;PORT&#39;, 8080)))</code></pre>
+<p><a href="https://github.com/Alexander-Minyushkin/Alexander-Minyushkin.github.io_source/blob/master/Dockerfile">Dockerfile</a></p>
+<pre class="bash"><code># Use the official Python image.
+# https://hub.docker.com/_/python
+FROM python:3.6-alpine
+
+# Install production dependencies.
+RUN pip install Flask gunicorn
+
+# Copy local code to the container image.
+ENV APP_HOME /app
+WORKDIR $APP_HOME
+COPY app.py .
+COPY ./public ./public
+
+
+# Run the web service on container startup. Here we use the gunicorn
+# webserver, with one worker process and 8 threads.
+# For environments with multiple CPU cores, increase the number of workers
+# to be equal to the cores available.
+CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 app:app</code></pre>
+<p>Then deploy on Cloud Run:</p>
+<pre class="bash"><code>docker build -t gcr.io/[PROJECT-ID]/[SERVICE_NAME]:[TAG] .
+docker push gcr.io/[PROJECT-ID]/[SERVICE_NAME]:[TAG]
+gcloud beta run deploy [SERVICE_NAME] --image gcr.io/[PROJECT-ID]/[SERVICE_NAME]:[TAG] \
+--concurrency=10 \
+--region=us-central1 \
+--allow-unauthenticated</code></pre>
+<p>Your site will be available to anybody (thanks to <strong>–allow-unauthenticated</strong>) by link like this <a href="https://mystatic-uydlcxd3aq-uc.a.run.app" class="uri">https://mystatic-uydlcxd3aq-uc.a.run.app</a></p>
+<p>Remind you once again: this approach is not free. You will need to pay for compute time and for storage (containers introduce additional overhead to size of your content). See more details on pricing here <a href="https://cloud.google.com/run/pricing" class="uri">https://cloud.google.com/run/pricing</a></p>
+<p>You can leave comments here <a href="https://twitter.com/AMiniushkin" class="uri">https://twitter.com/AMiniushkin</a></p>
