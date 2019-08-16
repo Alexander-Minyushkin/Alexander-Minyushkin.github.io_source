@@ -1,0 +1,55 @@
+---
+title: "Hysteresis in Hardware Estimates"
+subtitle: "What does it mean?"
+author: "Alexander Minyushkin"
+date: 2019-04-19T19:00:00+03:00
+categories: ["GCP"]
+tags: ["Cloud", "GCP", "Flask", "Docker", "Deployment", "R"]
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE)
+oldw <- getOption("warn")
+options(warn = -1)
+
+usePackage <- function(p) {
+  if (!is.element(p, installed.packages()[,1]))
+    install.packages(p, dep = TRUE)
+  require(p, character.only = TRUE, quietly = TRUE)
+}
+
+usePackage("data.table") # for fast merging of access log & sar
+usePackage("parallel")
+usePackage("plyr")
+usePackage("ggplot2")
+
+usePackage('DT')
+usePackage("plotly")
+usePackage("jsonlite")
+usePackage("htmltools")
+
+Sys.setlocale("LC_TIME", "us")
+
+options(stringsAsFactors = FALSE)
+
+
+```
+
+
+```{r}
+hw <- fread('2019-04-19-Hysteresis-in-Hardware-Estimates/sample_HW.csv')
+
+hw$time <- (hw$day-1)*24 + hw$time_h
+
+ggplot(data = melt(hw, id.vars="time", measure.vars=c("workload", "HW")), 
+           aes(x=time,
+               y=value,
+               color=variable,
+               group=variable)) +
+      geom_line() + ggtitle("Workload and HW utilization") 
+```
+
+
+You can leave comments here https://twitter.com/AMiniushkin 
+
